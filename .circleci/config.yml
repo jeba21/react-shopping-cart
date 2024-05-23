@@ -11,14 +11,21 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Clear cache
+          command: npm cache clean --force
+      - run:
           name: Install dependencies
           command: npm install
+      - run:
+          name: List installed packages
+          command: npm list --depth=0
       - run:
           name: Run tests
           command: npm run test
       - persist_to_workspace:
           root: .
           paths:
+            - node_modules
             - .
 
   build:
@@ -27,9 +34,12 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Install dependencies (if not persisted from test step)
+          name: Install dependencies
           command: npm install
           when: always
+      - run:
+          name: List installed packages
+          command: npm list --depth=0
       - run:
           name: Build project
           command: npm run build
@@ -44,9 +54,12 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Install dependencies (if not persisted from build step)
+          name: Install dependencies
           command: npm install
           when: always
+      - run:
+          name: List installed packages
+          command: npm list --depth=0
       - run:
           name: Deploy to Firebase
           command: ./node_modules/.bin/firebase deploy --token=$FIREBASE_DEPLOY_TOKEN
