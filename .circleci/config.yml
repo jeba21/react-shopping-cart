@@ -1,37 +1,56 @@
-witmy: &witmy
-  docker:
-    - image: circleci/node:14.17.3
+version: 2.1
 
-version: 2
+executors:
+  node-executor:
+    docker:
+      - image: circleci/node:14.17.3
+
 jobs:
   test:
-    <<: *witmy
+    executor: node-executor
     steps:
       - checkout
-      - run: npm install
-      - run: npm run test
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Run tests
+          command: npm run test
       - persist_to_workspace:
           root: .
           paths:
             - .
+
   build:
-    <<: *witmy
-    steps:
-      - attach_workspace:
-          at: .
-      - run: npm run build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-  deploy:
-    <<: *witmy
+    executor: node-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Deploy Main to Firebase
+          name: Install dependencies (if not persisted from test step)
+          command: npm install
+          when: always
+      - run:
+          name: Build project
+          command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  deploy:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies (if not persisted from build step)
+          command: npm install
+          when: always
+      - run:
+          name: Deploy to Firebase
           command: ./node_modules/.bin/firebase deploy --token=$FIREBASE_DEPLOY_TOKEN
+
 workflows:
   version: 2
   test-branch:
